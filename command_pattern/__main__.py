@@ -1,15 +1,18 @@
-from command import CreateRouteCommand, DisableRouteCommand, CloneRouteCommand
+from command import AddPointCommand
+from command import RemovePointCommand
 from invoker import Inventory
+from receiver import Location
+from receiver import Route
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     inventory = Inventory()
-    create = CreateRouteCommand()
-    route = create.execute(route_id=1, route_name="New Route")
-
-    disable = DisableRouteCommand(route=route)
-    clone = CloneRouteCommand(route=route)
-
-    inventory.add_command(disable)
-    inventory.add_command(clone)
+    route = Route("Some route name")
+    inventory.add_command(
+        AddPointCommand(receiver=route, point=Location(1, 1))
+    )
+    inventory.add_command(
+        AddPointCommand(receiver=route, point=Location(2, 2))
+    )
     inventory.execute_pipeline()
+    inventory.invoke(RemovePointCommand(receiver=route))

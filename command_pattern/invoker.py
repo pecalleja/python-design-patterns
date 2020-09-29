@@ -10,4 +10,11 @@ class Inventory:
 
     def execute_pipeline(self):
         for step in self.steps:
-            step.execute()
+            result = step.execute()
+            print(f"Executing: {step}, result: {result}")
+
+    @staticmethod
+    def invoke(command: RouteCommand):
+        result = command.execute()
+        print(f"Executing: {command}, result: {result}")
+        return result

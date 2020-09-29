@@ -1,18 +1,41 @@
-from command import CreateRouteCommand, DisableRouteCommand, CloneRouteCommand
+import pytest
+from command import AddPointCommand
+from command import RemovePointCommand
 from invoker import Inventory
+from receiver import Location
+from receiver import Route
 
 
-def test_command_pattern():
-    inventory = Inventory()
-    create = CreateRouteCommand()
-    route = create.execute(route_id=1, route_name="New Route")
-    disable = DisableRouteCommand(route=route)
-    clone = CloneRouteCommand(route=route)
-    assert route is clone.route
-    assert route.is_disabled is False
-    assert clone.route.is_disabled is False
-    inventory.add_command(disable)
-    inventory.add_command(clone)
-    inventory.execute_pipeline()
-    assert route is not clone.route
-    assert clone.route.is_disabled is True
+@pytest.fixture()
+def point1():
+    return Location(0, 0)
+
+
+@pytest.fixture()
+def point2():
+    return Location(3, 4)
+
+
+@pytest.fixture()
+def route():
+    return Route("New Route")
+
+
+def test_commands(point1, point2, route):
+    command1 = AddPointCommand(route, point1)
+    assert command1.execute() == 0
+    command2 = AddPointCommand(route, point2)
+    assert command2.execute() == 5
+    command3 = RemovePointCommand(route)
+    assert command3.execute() == 0
+
+
+def test_invoker(point1, point2, route):
+    command1 = AddPointCommand(route, point1)
+    command2 = RemovePointCommand(route)
+    invoker = Inventory()
+    invoker.add_command(command1)
+    invoker.add_command(command2)
+    invoker.execute_pipeline()
+    assert not command1.receiver.points
+    assert invoker.invoke(command2) is False

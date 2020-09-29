@@ -1,48 +1,45 @@
-from abc import ABC, abstractmethod
-from receiver import Route
+from abc import ABC
+from abc import abstractmethod
+
+from receiver import Location
+from receiver import RouteReceiver
 
 
 class RouteCommand(ABC):
-    route: Route
-
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+    def __init__(self, receiver: RouteReceiver):
+        self.receiver = receiver
 
     @abstractmethod
-    def execute(self):
+    def execute(self, **kwargs):
         pass
 
 
-class DisableRouteCommand(RouteCommand):
+class AddPointCommand(RouteCommand):
+    def __init__(self, receiver: RouteReceiver, point: Location):
+        super(AddPointCommand, self).__init__(receiver)
+        self.point = point
 
     def execute(self):
-        if not hasattr(self, 'route'):
-            raise ValueError("route object not defined")
-        else:
-            self.route.is_disabled = True
-            print(f"Route {self.route.name} disabled")
+        try:
+            if not self.receiver.points:
+                self.receiver.points = [self.point]
+            else:
+                self.receiver.points.append(self.point)
+            return self.receiver.calculate_distance()
+        except IndexError:
+            return False
+
+    def __repr__(self):
+        return f"<AddPoint({self.point})>"
 
 
-class CloneRouteCommand(RouteCommand):
-
+class RemovePointCommand(RouteCommand):
     def execute(self):
-        if not hasattr(self, 'route'):
-            raise ValueError("route object not defined")
-        else:
-            new_route = Route(**self.route.serialize())
-            self.route = new_route
-            print(f"Clone of route: {new_route.serialize()}")
-            return new_route
+        try:
+            self.receiver.points.pop()
+            return self.receiver.calculate_distance()
+        except IndexError:
+            return False
 
-
-class CreateRouteCommand(RouteCommand):
-
-    def execute(self, **kwargs):
-        new_route = Route(
-            kwargs.get('route_id'),
-            kwargs.get('route_name')
-        )
-        print(f"Created new route: {new_route.serialize()}")
-        self.route = new_route
-        return new_route
+    def __repr__(self):
+        return "<RemovePoint()>"
